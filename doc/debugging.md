@@ -54,12 +54,26 @@ lsof -nP -iTCP:5678 -sTCP:LISTEN
 
 You should see the `langgraph dev` python process bound to `127.0.0.1:5678`. If nothing is listed, the task isn't running (or already consumed a prior attach) — stop and restart it via step 1.
 
+### Orphaned debugpy process / "Address already in use"
+
+If a debug session gets stopped abnormally (e.g. closing the terminal panel instead of using VS Code's Stop button), the `debugpy` adapter process can be left running and holding port 5678. The next time you start the task, `langgraph dev` fails with:
+
+```
+RuntimeError: Can't listen for client connections: [Errno 48] Address already in use
+```
+
+This is handled automatically now: the task runs a `free port 5678` step first (`.vscode/tasks.json`), which kills anything already listening on 5678 before starting `langgraph dev`. You shouldn't need to do this manually anymore. If you ever want to check/clear it by hand:
+
+```bash
+lsof -ti tcp:5678 | xargs kill -9
+```
+
 ## Files involved
 
 | File | Purpose |
 |---|---|
 | `.vscode/launch.json` | The two debug configurations described above |
-| `.vscode/tasks.json` | Background task that starts `langgraph dev --debug-port 5678 --wait-for-client` |
+| `.vscode/tasks.json` | `free port 5678` (kills anything on 5678 first) → `langgraph dev (wait for debugger)` (starts `langgraph dev --debug-port 5678 --wait-for-client`) |
 | `.vscode/settings.json` | Points VS Code at the project's `venv` interpreter |
 | `agent.py` | The graph definition; `if __name__ == "__main__":` block is the entry point for Option 1 |
 | `.env` | `LITELLM_BASE_URL` / `LITELLM_API_KEY` — loaded automatically by the debug configs |

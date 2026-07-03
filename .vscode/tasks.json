@@ -2,6 +2,16 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "free port 5678",
+      "type": "shell",
+      "command": "lsof -ti tcp:5678 | xargs kill -9 2>/dev/null; true",
+      "presentation": {
+        "reveal": "silent",
+        "panel": "shared"
+      },
+      "problemMatcher": []
+    },
+    {
       "label": "langgraph dev (wait for debugger)",
       "type": "shell",
       "command": "${workspaceFolder}/venv/bin/langgraph",
@@ -9,6 +19,8 @@
       "options": {
         "cwd": "${workspaceFolder}"
       },
+      "dependsOn": ["free port 5678"],
+      "dependsOrder": "sequence",
       "isBackground": true,
       "problemMatcher": {
         "pattern": {
